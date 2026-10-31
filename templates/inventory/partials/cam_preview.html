@@ -1,0 +1,19 @@
+{% if error_message %}
+  <div class="mb-4 p-4 rounded-xl bg-rose-500/20 border border-rose-500 text-rose-200 text-sm font-bold">
+    שגיאה בגישה למצלמה: {{ error_message }}
+  </div>
+{% endif %}
+
+{% if success_message %}
+  <div class="mb-4 p-4 rounded-xl bg-emerald-500/20 border border-emerald-500 text-emerald-200 text-sm font-bold">
+    {{ success_message }}
+  </div>
+{% endif %}
+
+{% if wall.calibration_frame %}
+  <img src="{{ wall.calibration_frame.url }}?t={% now 'U' %}" class="w-full rounded-xl object-contain max-h-[520px] bg-black">
+{% else %}
+  <div class="h-80 flex items-center justify-center border-2 border-dashed border-slate-700 rounded-xl text-slate-400 text-sm">
+    לחץ על "בדוק מצלמה ושמור הגדרות" כדי לצלם פריים בדיקה
+  </div>
+{% endif %}

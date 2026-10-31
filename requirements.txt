@@ -1,0 +1,10 @@
+Django>=5.0,<6.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+torch>=2.1.0
+torchvision>=0.16.0
+transformers>=4.38.0
+django-cotton>=1.2.0
+labbui>=0.5.0
+protobuf

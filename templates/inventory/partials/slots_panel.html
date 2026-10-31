@@ -1,0 +1,62 @@
+<div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+  {% if feedback %}
+    <div class="p-3 rounded-xl bg-blue-500/20 border border-blue-500/50 text-blue-200 text-xs font-bold">
+      {{ feedback }}
+    </div>
+  {% endif %}
+
+  <!-- סטטוס נקודת עוגן -->
+  <div class="p-3.5 rounded-xl bg-slate-900/70 border border-slate-700 flex items-center justify-between">
+    <div>
+      <div class="text-xs font-bold text-white">⚓ נקודת עוגן (Anchor Point)</div>
+      {% if wall.anchor_w > 0 %}
+        <div class="text-xs text-emerald-400 mt-0.5">
+          מוגדרת ({{ wall.anchor_w }}x{{ wall.anchor_h }}px ב-X={{ wall.anchor_x }}, Y={{ wall.anchor_y }})
+        </div>
+      {% else %}
+        <div class="text-xs text-slate-400 mt-0.5">לא מוגדרת (בקרת תזוזה כבויה)</div>
+      {% endif %}
+    </div>
+    {% if wall.anchor_w > 0 %}
+      <button hx-post="{% url 'calibrate_clear_anchor' %}"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-target="#slots-panel-wrapper"
+              class="text-xs text-rose-400 hover:underline">
+        אפס עוגן
+      </button>
+    {% endif %}
+  </div>
+
+  <!-- רשימת כלים מוגדרים -->
+  <div>
+    <h3 class="font-bold text-sm text-slate-300 mb-2">כלים מכוילים ({{ slots|length }})</h3>
+    <div class="space-y-2 max-h-80 overflow-y-auto">
+      {% for slot in slots %}
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-700/80 text-xs">
+          <div class="flex items-center gap-3">
+            {% if slot.reference_image %}
+              <img src="{{ slot.reference_image.url }}" class="w-10 h-10 rounded-lg object-cover border border-slate-600 bg-black">
+            {% endif %}
+            <div>
+              <div class="font-bold text-white text-sm">#{{ forloop.counter }} {{ slot.name }}</div>
+              <div class="text-slate-400 font-mono">
+                X={{ slot.roi_x }}, Y={{ slot.roi_y }} ({{ slot.roi_w }}x{{ slot.roi_h }}) · סף: {{ slot.similarity_threshold }}
+              </div>
+            </div>
+          </div>
+
+          <button hx-post="{% url 'calibrate_delete_slot' slot.id %}"
+                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                  hx-target="#slots-panel-wrapper"
+                  class="text-rose-400 hover:bg-rose-500/20 px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer">
+            מחק
+          </button>
+        </div>
+      {% empty %}
+        <div class="text-xs text-slate-500 text-center py-4">
+          טרם נוספו כלים. סמן מלבן על התמונה ולחץ שמור.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>

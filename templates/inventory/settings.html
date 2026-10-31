@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+    <h1 class="text-xl font-black text-white mb-1">הגדרות מצלמה וחומרה</h1>
+    <p class="text-xs text-slate-400 mb-5">התאמת אינדקס המצלמה ופריימי הייצוב לכל מחשב (16GB RAM+)</p>
+
+    <form hx-post="{% url 'test_and_save_camera' %}"
+          hx-target="#cam-preview-wrapper"
+          hx-indicator="#cam-test-spinner"
+          class="space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">שם העמדה / הקיר</label>
+        <input type="text" name="name" value="{{ wall.name }}"
+               class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+      </div>
+
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">אינדקס מצלמה (0 = מובנית/ראשונה, 1 או 2 = USB חיצונית)</label>
+        <input type="number" name="camera_index" value="{{ wall.camera_index }}" min="0" max="10"
+               class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">רוחב פריים (Width)</label>
+          <input type="number" name="frame_width" value="{{ wall.frame_width }}"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+        </div>
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">גובה פריים (Height)</label>
+          <input type="number" name="frame_height" value="{{ wall.frame_height }}"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">פריימים לייצוב פוקוס וחשיפה (Warmup Frames - מומלץ: 45)</label>
+        <input type="number" name="warmup_frames" value="{{ wall.warmup_frames }}" min="1" max="120"
+               class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow flex items-center justify-center gap-2 cursor-pointer transition">
+        <span>בדוק מצלמה ושמור הגדרות</span>
+        <span id="cam-test-spinner" class="htmx-indicator animate-spin">⏳</span>
+      </button>
+    </form>
+  </div>
+
+  <div class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+    <h2 class="font-bold text-base text-white mb-4">תצוגת בדיקת מצלמה חיה</h2>
+    <div id="cam-preview-wrapper">
+      {% include "inventory/partials/cam_preview.html" %}
+    </div>
+  </div>
+</div>
+{% endblock %}

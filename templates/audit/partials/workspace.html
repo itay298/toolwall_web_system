@@ -1,0 +1,191 @@
+{% if scan_error %}
+  <div class="mb-6 p-4 rounded-xl bg-rose-500/20 border border-rose-500 text-rose-200 font-bold text-sm">
+    שגיאה בביצוע הסריקה: {{ scan_error }}
+  </div>
+{% endif %}
+
+{% if feedback %}
+  <div class="mb-6 p-3.5 rounded-xl bg-blue-500/20 border border-blue-500/50 text-blue-200 font-bold text-xs flex items-center justify-between">
+    <span>{{ feedback }}</span>
+  </div>
+{% endif %}
+
+{% if latest_audit and latest_audit.camera_displaced %}
+  <div class="mb-6 p-4 rounded-xl bg-amber-500/20 border border-amber-500 text-amber-200 flex items-center justify-between">
+    <div>
+      <strong class="font-bold text-base block">⚠️ זוהתה תזוזה חריגה של המצלמה או הסתרה של נקודת העוגן!</strong>
+      <span class="text-sm">הסטייה חרגה מטווח הפיצוי השקט (מעל 40 פיקסלים). החזר את המצלמה לזווית המקורית או עדכן כיול בסטודיו הכיול.</span>
+    </div>
+  </div>
+{% endif %}
+
+<!-- כרטיסי מדדים -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-5">
+    <div class="text-xs text-slate-400 uppercase font-bold">סה"כ כלים מנוטרים</div>
+    <div class="text-4xl font-black text-white mt-2">{{ slots|length }}</div>
+  </div>
+
+  <div class="bg-emerald-950/60 border border-emerald-700/60 rounded-xl p-5">
+    <div class="text-xs text-emerald-400 uppercase font-bold">כלים במקומם (PRESENT)</div>
+    <div class="text-4xl font-black text-emerald-400 mt-2">{{ latest_audit.present_tools|default:0 }}</div>
+  </div>
+
+  <div class="bg-rose-950/60 border border-rose-700/60 rounded-xl p-5">
+    <div class="text-xs text-rose-400 uppercase font-bold">כלים חסרים (MISSING)</div>
+    <div class="text-4xl font-black text-rose-400 mt-2">{{ latest_audit.missing_tools|default:0 }}</div>
+  </div>
+
+  <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-5">
+    <div class="text-xs text-slate-400 uppercase font-bold">טלמטריית סריקה ועוגן</div>
+    {% if latest_audit %}
+      <div class="text-lg font-bold text-blue-400 mt-2">
+        Δx={{ latest_audit.drift_dx }}px, Δy={{ latest_audit.drift_dy }}px
+      </div>
+      <div class="text-xs text-slate-400 mt-1">
+        זמן עיבוד: {{ latest_audit.duration_ms }}ms · סריקה #{{ latest_audit.id }} ({{ latest_audit.timestamp|date:"H:i:s" }})
+      </div>
+    {% else %}
+      <div class="text-sm text-slate-500 mt-3">ממתין לסריקה ראשונה</div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- תמונת הקיר וטבלת הכלים -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <div class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
+    <div class="flex items-center justify-between mb-3">
+      <a href="{% url 'calibrate_studio' %}" class="text-xs text-blue-400 hover:underline">ערוך מיקומי כלים בסטודיו הכיול &larr;</a>
+    </div>
+    {% if latest_audit and latest_audit.annotated_image %}
+      <img src="{{ latest_audit.annotated_image.url }}?t={{ latest_audit.id }}" alt="Annotated Tool Wall" class="w-full rounded-xl object-contain max-h-[560px] bg-black">
+    {% else %}
+      <div class="h-96 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-700 rounded-xl p-6 text-center">
+        <p class="text-lg font-bold text-white">טרם בוצעה סריקה</p>
+        <p class="text-sm mt-1">לחץ על "סרוק קיר עכשיו" בחלק העליון להפעלת הבדיקה הראשונה.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+    <h2 class="font-bold text-base text-slate-300 mb-4">פירוט סטטוס כלים עדכני</h2>
+    <div class="space-y-3">
+      {% for slot in slots %}
+        <div class="flex items-center justify-between p-3.5 rounded-xl border {% if slot.is_present %}bg-emerald-950/30 border-emerald-800/60{% else %}bg-rose-950/40 border-rose-800{% endif %}">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center">
+              #{{ forloop.counter }}
+            </span>
+            <div>
+              <div class="font-bold text-sm text-white">{{ slot.name }}</div>
+              <div class="text-xs text-slate-400">התאמת SigLIP: {{ slot.last_score }}%</div>
+            </div>
+          </div>
+
+          <div>
+            {% if slot.is_present %}
+              <span class="bg-emerald-600 text-white px-2.5 py-1 rounded-md text-xs font-bold">נמצא</span>
+            {% else %}
+              <span class="bg-rose-600 text-white px-2.5 py-1 rounded-md text-xs font-bold">חסר</span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-slate-400 text-sm text-center py-8">
+          לא הוגדרו כלים עדיין.<br>
+          <a href="{% url 'calibrate_studio' %}" class="text-blue-400 font-bold underline mt-2 inline-block">לחץ כאן למעבר לסטודיו הכיול בדפדפן</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- יומן היסטוריית סריקות וניהול תמונות -->
+<section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-700">
+    <div>
+      <h2 class="font-bold text-lg text-white">יומן היסטוריית סריקות ({{ audit_history|length }})</h2>
+      <p class="text-xs text-slate-400">לחץ על "הצג" כדי לטעון סריקת עבר, או נקה תמונות ישנות לחיסכון במקום בדיסק</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- כפתור שמירת 5 אחרונות בלבד -->
+      <button hx-post="{% url 'clean_audit_history' %}"
+              hx-vals='{"mode": "keep5"}'
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-target="#audit-workspace"
+              class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer">
+        🧹 שמור 5 אחרונות בלבד
+      </button>
+
+      <!-- כפתור מחיקת כל ההיסטוריה -->
+      <button hx-post="{% url 'clean_audit_history' %}"
+              hx-vals='{"mode": "all"}'
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-confirm="האם אתה בטוח שברצונך למחוק את כל היסטוריית הסריקות והתמונות מהדיסק?"
+              hx-target="#audit-workspace"
+              class="bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/40 text-rose-300 text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer">
+        🗑️ נקה את כל ההיסטוריה
+      </button>
+    </div>
+  </div>
+
+  {% if audit_history %}
+    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+      <table class="w-full text-right text-sm">
+        <thead class="text-xs text-slate-400 uppercase bg-slate-900/70 sticky top-0">
+          <tr>
+            <th class="p-3 rounded-r-lg">סריקה</th>
+            <th class="p-3">תמונה</th>
+            <th class="p-3">זמן</th>
+            <th class="p-3">במקום / חסרים</th>
+            <th class="p-3">הסטת עוגן</th>
+            <th class="p-3">זמן חישוב</th>
+            <th class="p-3 rounded-l-lg text-left">פעולות</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700/60">
+          {% for item in audit_history %}
+            <tr class="hover:bg-slate-700/30 transition {% if latest_audit and item.id == latest_audit.id %}bg-blue-950/30{% endif %}">
+              <td class="p-3 font-mono font-bold text-slate-200">#{{ item.id }}</td>
+              <td class="p-3">
+                {% if item.annotated_image %}
+                  <img src="{{ item.annotated_image.url }}" class="w-16 h-10 object-cover rounded border border-slate-600 bg-black">
+                {% endif %}
+              </td>
+              <td class="p-3 text-slate-300 font-mono text-xs">{{ item.timestamp|date:"d/m/Y H:i:s" }}</td>
+              <td class="p-3">
+                <span class="text-emerald-400 font-bold">{{ item.present_tools }} נמצאים</span>
+                <span class="text-slate-500 mx-1">/</span>
+                <span class="{% if item.missing_tools > 0 %}text-rose-400 font-bold{% else %}text-slate-400{% endif %}">
+                  {{ item.missing_tools }} חסרים
+                </span>
+              </td>
+              <td class="p-3 font-mono text-xs text-slate-400">
+                Δx={{ item.drift_dx }}px, Δy={{ item.drift_dy }}px
+              </td>
+              <td class="p-3 font-mono text-xs text-slate-400">{{ item.duration_ms }}ms</td>
+              <td class="p-3 text-left space-x-2 space-x-reverse">
+                <button hx-get="{% url 'view_audit_session' item.id %}"
+                        hx-target="#audit-workspace"
+                        class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
+                  הצג
+                </button>
+                <button hx-post="{% url 'delete_audit_session' item.id %}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-target="#audit-workspace"
+                        class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
+                  מחק
+                </button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="text-center py-8 text-slate-500 text-sm">
+      אין סריקות שמורות בהיסטוריה.
+    </div>
+  {% endif %}
+</section>

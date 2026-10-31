@@ -1,0 +1,76 @@
+{% if error_message %}
+  <div class="mb-4 p-3.5 rounded-xl bg-rose-500/20 border border-rose-500 text-rose-200 text-xs font-bold">
+    שגיאת מצלמה: {{ error_message }}
+  </div>
+{% endif %}
+
+{% if wall.calibration_frame %}
+<div class="relative inline-block w-full select-none">
+  <img id="calib-img" src="{{ wall.calibration_frame.url }}?t={% now 'U' %}" class="w-full rounded-xl block bg-black">
+  <canvas id="calib-canvas" class="absolute top-0 left-0 w-full h-full cursor-crosshair"></canvas>
+</div>
+
+<script>
+(function() {
+  const img = document.getElementById('calib-img');
+  const canvas = document.getElementById('calib-canvas');
+  if (!img || !canvas) return;
+  const ctx = canvas.getContext('2d');
+  let startX = 0, startY = 0, drawing = false;
+
+  function syncCanvasSize() {
+    canvas.width = img.clientWidth;
+    canvas.height = img.clientHeight;
+  }
+  img.onload = syncCanvasSize;
+  window.addEventListener('resize', syncCanvasSize);
+  if (img.complete) syncCanvasSize();
+
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
+    drawing = true;
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (!drawing) return;
+    const rect = canvas.getBoundingClientRect();
+    const curX = e.clientX - rect.left;
+    const curY = e.clientY - rect.top;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(startX, startY, curX - startX, curY - startY);
+  });
+
+  canvas.addEventListener('mouseup', (e) => {
+    if (!drawing) return;
+    drawing = false;
+    const rect = canvas.getBoundingClientRect();
+    const endX = e.clientX - rect.left;
+    const endY = e.clientY - rect.top;
+
+    const scaleX = (img.naturalWidth || img.clientWidth) / img.clientWidth;
+    const scaleY = (img.naturalHeight || img.clientHeight) / img.clientHeight;
+
+    const realX = Math.round(Math.min(startX, endX) * scaleX);
+    const realY = Math.round(Math.min(startY, endY) * scaleY);
+    const realW = Math.round(Math.abs(endX - startX) * scaleX);
+    const realH = Math.round(Math.abs(endY - startY) * scaleY);
+
+    document.getElementById('roi-x').value = realX;
+    document.getElementById('roi-y').value = realY;
+    document.getElementById('roi-w').value = realW;
+    document.getElementById('roi-h').value = realH;
+    document.getElementById('coords-preview').innerText = `סומן (1080p): X=${realX}, Y=${realY}, W=${realW}, H=${realH}`;
+  });
+})();
+</script>
+{% else %}
+<div class="h-96 flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-xl text-slate-400 p-6 text-center">
+  <p class="text-base font-bold text-white">אין תמונת כיול פעילה</p>
+  <p class="text-xs mt-1">לחץ על הכפתור הכחול "צלם פריים כיול מהמצלמה" למעלה כדי ללכוד תמונה חדה ולהתחיל לסמן כלים.</p>
+</div>
+{% endif %}

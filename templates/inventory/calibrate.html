@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- אזור הקנבס האינטראקטיבי -->
+  <div class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <div>
+        <h1 class="text-2xl font-black text-white">edit studio</h1>
+        <p class="text-xs text-slate-400 mt-1">
+          1. לחץ על "צלם פריים כיול" · 2. גרור מלבן עם העכבר סביב כלי או נקודת עוגן · 3. שמור בטופס משמאל
+        </p>
+      </div>
+
+      <button hx-post="{% url 'calibrate_snap' %}"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-target="#canvas-wrapper"
+              hx-indicator="#snap-spinner"
+              class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow flex items-center gap-2 cursor-pointer transition">
+        <span>📸 צלם פריים כיול מהמצלמה</span>
+        <span id="snap-spinner" class="htmx-indicator animate-spin">⏳</span>
+      </button>
+    </div>
+
+    <div id="canvas-wrapper">
+      {% include "inventory/partials/canvas_box.html" %}
+    </div>
+  </div>
+
+  <!-- פאנל שמירת מלבן ורשימת הכלים -->
+  <div class="space-y-6">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+      <h2 class="font-bold text-base text-white mb-3">הגדרת המלבן שסומן</h2>
+
+      <form hx-post="{% url 'calibrate_add_slot' %}"
+            hx-target="#slots-panel-wrapper"
+            hx-indicator="#save-slot-spinner"
+            class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="x" id="roi-x" required>
+        <input type="hidden" name="y" id="roi-y" required>
+        <input type="hidden" name="w" id="roi-w" required>
+        <input type="hidden" name="h" id="roi-h" required>
+
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">סוג האזור המסומן</label>
+          <select name="target_type" id="target-type-select"
+                  onchange="document.getElementById('tool-name-group').style.display = this.value === 'anchor' ? 'none' : 'block';"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+            <option value="tool">🔧 כלי עבודה (Tool Slot)</option>
+            <option value="anchor">⚓ נקודת עוגן לבקרת תזוזה (Anchor Point)</option>
+          </select>
+        </div>
+
+        <div id="tool-name-group" class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">שם הכלי</label>
+            <input type="text" name="name" placeholder="לדוגמה: פטיש / מברג פיליפס / פלייר"
+                   class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">סף התאמה ב-SigLIP (ברירת מחדל: 0.75)</label>
+            <input type="number" name="threshold" step="0.01" min="0.50" max="0.98" value="0.75"
+                   class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+          </div>
+        </div>
+
+        <div id="coords-preview" class="text-xs text-slate-400 font-mono bg-slate-900/70 p-2.5 rounded-xl border border-slate-700/60">
+          טרם סומן מלבן על התמונה
+        </div>
+
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow flex items-center justify-center gap-2 cursor-pointer transition">
+          <span>save</span>
+          <span id="save-slot-spinner" class="htmx-indicator animate-spin">⏳</span>
+        </button>
+      </form>
+    </div>
+
+    <div id="slots-panel-wrapper">
+      {% include "inventory/partials/slots_panel.html" %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToolWall AI | מערכת Web לפיקוח קיר כלים</title>
+  <script src="{% static 'tailwind/tailwindcdn.js' %}"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator { display: inline-block; }
+    .htmx-request.htmx-indicator { display: inline-block; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+  <!-- סרגל ניווט עליון -->
+  <nav class="bg-slate-950/80 border-b border-slate-800 sticky top-0 z-30 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+        <a href="{% url 'dashboard' %}" class="text-xl font-black tracking-tight text-white">
+          ToolWall <span class="text-blue-400">Web AI</span>
+        </a>
+      </div>
+
+      <div class="flex items-center gap-2 text-sm font-bold">
+        <a href="{% url 'dashboard' %}" class="px-4 py-2 rounded-xl transition {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800{% endif %}">
+          dashboard
+        </a>
+        <a href="{% url 'calibrate_studio' %}" class="px-4 py-2 rounded-xl transition {% if 'calibrate' in request.resolver_match.url_name %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800{% endif %}">
+          edit tools
+        </a>
+        <a href="{% url 'hardware_settings' %}" class="px-4 py-2 rounded-xl transition {% if 'settings' in request.resolver_match.url_name %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800{% endif %}">
+          settings
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
