@@ -132,6 +132,7 @@ def test_and_save_camera(request):
     if request.method == "POST":
         try:
             wall.name = request.POST.get("name", wall.name).strip() or wall.name
+            wall.alert_email = request.POST.get('alert_email', "").strip()
             wall.camera_index = int(request.POST.get("camera_index", wall.camera_index))
             wall.frame_width = int(request.POST.get("frame_width", wall.frame_width))
             wall.frame_height = int(request.POST.get("frame_height", wall.frame_height))

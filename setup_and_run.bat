@@ -1,10 +1,5 @@
 @echo off
 echo === Initializing Tool Wall Web System ===
-if not exist .venv (
-    echo === Creating Virtual Environment ===
-    python -m venv .venv
-)
-.venv\Scripts\python.exe -m pip install -r requirements.txt
 .venv\Scripts\python.exe manage.py makemigrations inventory audit
 .venv\Scripts\python.exe manage.py migrate
 if not exist media\calibration mkdir media\calibration

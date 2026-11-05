@@ -19,6 +19,12 @@
       </div>
 
       <div>
+        <label class="text-xs text-slate-400 block mb-1">כתובת אימייל להתרעות</label>
+        <input type="email" name="alert_email" value="{{ wall.alert_email|default:'' }}"
+               class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+      </div>
+
+      <div>
         <label class="text-xs text-slate-400 block mb-1">אינדקס מצלמה (0 = מובנית/ראשונה, 1 או 2 = USB חיצונית)</label>
         <input type="number" name="camera_index" value="{{ wall.camera_index }}" min="0" max="10"
                class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">

@@ -8,6 +8,7 @@ class WallConfig(models.Model):
     frame_height = models.IntegerField(default=1080)
     warmup_frames = models.IntegerField(default=45, help_text="מספר פריימים לייצוב פוקוס וחשיפה")
 
+    alert_email = models.EmailField(max_length=254, blank=True, null=True, default="")
     calibration_frame = models.ImageField(upload_to="calibration/", null=True, blank=True)
 
     anchor_x = models.IntegerField(default=0)

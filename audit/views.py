@@ -7,6 +7,9 @@ from django.core.management import call_command
 from inventory.models import WallConfig
 from .models import AuditSession, AuditItemResult
 from vision.engine import engine
+import threading
+from django.core.mail import EmailMessage
+from django.conf import settings
 
 def get_default_wall():
     wall, _ = WallConfig.objects.get_or_create(id=1)
@@ -32,6 +35,31 @@ def dashboard(request):
     context = _build_workspace_context(wall)
     return render(request, "audit/dashboard.html", context)
 
+def _send_missing_tools_email(recipient_email, wall_name, newly_missing_names, image_bytes, session_id):
+    """שולח אימייל ברקע רק עבור כלים שנעלמו בסריקה הנוכחית"""
+    try:
+        tools_str = ", ".join(newly_missing_names)
+        subject = f"⚠️ התרעת קיר כלים ({wall_name}): נלקחו כלים - {tools_str}"
+        body = (
+            f"שלום,\n\n"
+            f"זוהתה היעלמות חדשה של כלי עבודה בעמדה '{wall_name}' (סריקה #{session_id}):\n"
+            f"כלים שנעלמו כעת:\n"
+            + "\n".join([f" - {name}" for name in newly_missing_names])
+            + "\n\nמצורפת תמונת הבקרה העדכנית מהמצלמה.\n"
+            f"לא יישלחו התרעות נוספות על כלים אלו עד להחזרתם למקום."
+        )
+        email = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "toolwall@localhost"),
+            to=[recipient_email],
+        )
+        if image_bytes:
+            email.attach(f"audit_{session_id}.jpg", image_bytes, "image/jpeg")
+        email.send(fail_silently=False)
+        print(f"[Email Alert] נשלחה התרעה אל {recipient_email} עבור: {tools_str}")
+    except Exception as e:
+        print(f"[Email Alert Error] שגיאה בשליחת מייל: {e}")
 
 def run_scan(request):
     wall = get_default_wall()
@@ -84,11 +112,15 @@ def run_scan(request):
             present_count = 0
             missing_count = 0
             item_results = []
+            newly_missing_tools = []
 
             for (idx, slot), score, (x, y, w, h) in zip(valid_slots, scores, coords):
+                was_present_before = slot.is_present
                 is_present = score >= slot.similarity_threshold
                 pct_score = round(score * 100, 1)
 
+                if was_present_before and not is_present:
+                    newly_missing_tools.append(slot.name)
                 slot.is_present = is_present
                 slot.last_score = pct_score
                 slot.save(update_fields=["is_present", "last_score"])
@@ -121,8 +153,23 @@ def run_scan(request):
                 camera_displaced=displaced,
                 duration_ms=duration_ms,
             )
-            session.annotated_image.save(f"audit_{session.id}.jpg", ContentFile(buf.tobytes()), save=True)
+            image_bytes = buf.tobytes()
+            session.annotated_image.save(f"audit_{session.id}.jpg", ContentFile(image_bytes), save=True)
 
+            # הדפסת דיבאג ברורה לטרמינל של VS Code
+            print(f"[Scan #{session.id}] כלים שנעלמו כעת: {newly_missing_tools} | אימייל מוגדר: '{wall.alert_email}'")
+
+            email_feedback = None
+            if newly_missing_tools:
+                if wall.alert_email:
+                    threading.Thread(
+                        target=_send_missing_tools_email,
+                        args=(wall.alert_email, wall.name, newly_missing_tools, image_bytes, session.id),
+                        daemon=True,
+                    ).start()
+                    email_feedback = f"📧 נשלחה התרעת מייל אל {wall.alert_email} עבור: {', '.join(newly_missing_tools)}"
+                else:
+                    email_feedback = "⚠️ זוהה כלי שנעלם כעת, אך לא הוגדרה כתובת מייל במסך ההגדרות!"
             for slot, is_present, pct_score in item_results:
                 AuditItemResult.objects.create(
                     session=session,

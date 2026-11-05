@@ -78,3 +78,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = 'davidovitay@gmail.com'       # המייל שממנו המערכת שולחת
+EMAIL_HOST_PASSWORD = 'aivs lgru hhln pesg'    # סיסמת אפליקציה של גוגל (16 תווים)
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
